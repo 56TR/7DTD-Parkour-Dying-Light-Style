@@ -113,6 +113,40 @@ namespace ParkourMovement
             Instance._local = true;
         }
 
+        /// <summary>
+        /// Photo mode (screenshots for the mod page): hold one frame of a clip on this body, with a wall-run lean.
+        /// The entity must be a humanoid SDCS character (player, trader); nothing is sent over the network.
+        /// </summary>
+        public void Pose(string clip, float time, float lean)
+        {
+            if (!BodyAnimLibrary.Clips.TryGetValue(clip, out PkClipData c)) return;
+            if (!_posing)
+            {
+                // true bind pose of this skeleton: reset the animator, then read the rest rotations
+                Animator an = FindAnimator();
+                if (an != null)
+                {
+                    an.Rebind();
+                    an.Update(0f);
+                    _anim = null;   // Bind() again: captures the rest pose now
+                    Bind();
+                }
+            }
+            _posing = true;
+            _clip = c;
+            _t = Mathf.Clamp(time, 0f, c.length);
+            _speed = 0f;
+            _target = 1f;
+            _w = 1f;
+            _lean = lean;
+        }
+
+        public void EndPose() { _posing = false; _target = 0f; _speed = 1f; _lean = 0f; }
+
+        bool _posing;
+        readonly Dictionary<string, Quaternion> _restRot = new Dictionary<string, Quaternion>();
+        Vector3 _restHips = HipsRest;
+
         public static BodyAnimDriver ForRemote(EntityAlive e)
         {
             BodyAnimDriver d = e.gameObject.GetComponent<BodyAnimDriver>() ?? e.gameObject.AddComponent<BodyAnimDriver>();
@@ -137,6 +171,10 @@ namespace ParkourMovement
             foreach (Transform t in a.GetComponentsInChildren<Transform>(true))
                 if (!_bones.ContainsKey(t.name)) _bones[t.name] = t;
             _bones.TryGetValue("Hips", out _hips);
+            // rest pose of this skeleton (photo mode: other characters have a different bind pose than the player's)
+            _restRot.Clear();
+            foreach (var kv in _bones) _restRot[kv.Key] = kv.Value.localRotation;
+            _restHips = _hips != null ? _hips.localPosition : HipsRest;
             _bones.TryGetValue("LeftArm", out _lUp);
             _bones.TryGetValue("LeftForeArm", out _lLo);
             _bones.TryGetValue("LeftHand", out _lHand);
@@ -154,8 +192,7 @@ namespace ParkourMovement
                 float dt = Time.deltaTime;
                 if (_local)
                 {
-                    ChooseLocal(dt);
-                    Announce();
+                    if (!_posing) { ChooseLocal(dt); Announce(); }
                     bool fp = (_e as EntityPlayerLocal).bFirstPersonView;
                     if (!fp && _wasFp) ShowBodyRenderers(true);   // back to third person: the body is the player's again
                     _wasFp = fp;
@@ -170,7 +207,7 @@ namespace ParkourMovement
                 }
                 else
                 {
-                    ChooseRemote();
+                    if (!_posing) ChooseRemote();
                     if (!Bind()) return;
                 }
                 Advance(dt);
@@ -456,9 +493,10 @@ namespace ParkourMovement
             {
                 if (!_bones.TryGetValue(c.bones[b], out Transform tr)) continue;
                 Quaternion q = Quaternion.Slerp(Q(c, f0, b, nb), Q(c, f1, b, nb), k);
+                if (_posing && _restRot.TryGetValue(c.bones[b], out Quaternion rest)) q = rest * q;
                 tr.localRotation = Quaternion.Slerp(tr.localRotation, q, _w);
             }
-            Vector3 hp = HipsRest + Vector3.Lerp(H(c, f0), H(c, f1), k);
+            Vector3 hp = (_posing ? _restHips : HipsRest) + Vector3.Lerp(H(c, f0), H(c, f1), k);
             _hips.localPosition = Vector3.Lerp(_hips.localPosition, hp, _w);
         }
 

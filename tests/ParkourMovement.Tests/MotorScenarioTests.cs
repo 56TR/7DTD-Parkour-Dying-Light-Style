@@ -34,6 +34,24 @@ namespace ParkourMovement.Tests
         }
 
         [Fact]
+        public void Slide_lasts_until_speed_is_lost_not_for_a_fixed_time()
+        {
+            // low friction = a long slope that keeps the slide going
+            var s = new BoxSim(Floor(), new V3(0, 0, 0));
+            s.T.SlideFriction = 0.8f;
+            s.Hold(1.0f, BoxSim.Sprint());
+            s.Step(BoxSim.Sprint(crouch: true));
+            var held = BoxSim.Sprint();
+            held.CrouchHeld = true;
+            s.Hold(3.0f, held);
+            Dump(s);
+            Assert.Equal(PkState.Slide, s.Motor.State);          // far past the old 1.25 s cap
+            s.Hold(6.0f, held);
+            Assert.Contains("slide-end", s.Events);              // ended by losing speed
+            Assert.Equal(PkState.None, s.Motor.State);
+        }
+
+        [Fact]
         public void Slide_needs_speed()
         {
             var s = new BoxSim(Floor(), new V3(0, 0, 0));

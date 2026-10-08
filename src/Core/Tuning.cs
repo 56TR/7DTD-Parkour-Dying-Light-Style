@@ -33,7 +33,7 @@ namespace ParkourMovement.Core
         public float SlideFriction = 3.9f; // DL2 SlidingMovementDeceleration 3.0, scaled
         public float SlideSlopeAccel = 1.0f;        // multiplier of gravity along the slope
         public float SlideExitSpeed = 2.8f;
-        public float SlideMaxTime = 1.25f; // DL2 SlideLoopNitroDuration
+        public float SlideMaxTime = 1.25f; // only the crawl under a low gap: after this it stands up once there is room. A normal slide ends when its speed drops below SlideExitSpeed
         public float SlideSteerDeg = 45f;           // deg/s
         public float SlideCooldown = 0.35f;
         public float SlideStamina = 4f;

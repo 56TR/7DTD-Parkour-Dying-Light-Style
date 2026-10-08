@@ -5,7 +5,7 @@ namespace ParkourMovement
 {
     public sealed class ModApi : IModApi
     {
-        public const string Version = "1.0.0";
+        public const string Version = "1.0.1";
         public const string HarmonyId = "pz.parkourmovement";
 
         public void InitMod(Mod modInstance)

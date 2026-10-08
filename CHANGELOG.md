@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- Slide: it no longer ends after a fixed time. It lasts as long as it has speed, so a long slope keeps it going, and ends when the speed drops below the exit speed (or Crouch is released).
+
 ## 1.0.0
 
 First release.

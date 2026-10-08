@@ -24,7 +24,7 @@
 	<property name="SlideFriction" value="3.9"/>  <!-- DL2 SlidingMovementDeceleration 3.0, scaled -->
 	<property name="SlideSlopeAccel" value="1.0"/>  <!-- multiplier of gravity along the slope -->
 	<property name="SlideExitSpeed" value="2.8"/>
-	<property name="SlideMaxTime" value="1.25"/>  <!-- DL2 SlideLoopNitroDuration -->
+	<property name="SlideMaxTime" value="1.25"/>  <!-- only the crawl under a low gap: after this it stands up once there is room. A normal slide ends when its speed drops below SlideExitSpeed -->
 	<property name="SlideSteerDeg" value="45"/>  <!-- deg/s -->
 	<property name="SlideCooldown" value="0.35"/>
 	<property name="SlideStamina" value="4"/>

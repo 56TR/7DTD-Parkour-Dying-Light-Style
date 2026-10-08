@@ -143,7 +143,7 @@ namespace ParkourMovement
         static readonly string[] Order =
         {
             "slide", "slidejump", "wallrun", "walljump", "climb", "jumpmantle", "vault", "hang", "roll", "coyote",
-            "lowslide", "injured", "tackle", "dropkick", "stomp", "vaultzombie", "thirdperson", "anim3p", "tacklegroup", "remoteloop", "fpslide", "hang3p", "perks", "options",
+            "lowslide", "injured", "tackle", "dropkick", "stomp", "vaultzombie", "thirdperson", "anim3p", "tacklegroup", "remoteloop", "fpslide", "hang3p", "perks", "options", "longslide", "photoshoot",
         };
 
         static IEnumerator SuiteCo(string filter, bool quit)
@@ -219,6 +219,7 @@ namespace ParkourMovement
                 {
                     if (P.IsDead()) { Log.Error("[Parkour][TEST] player died, aborting suite"); break; }
                     if (filter != "all" && !filter.Split(',').Contains(name)) continue;
+                    if (filter == "all" && name == "photoshoot") continue;   // only on request
                     var r = new Result { Name = name };
                     Log.Out("[Parkour][TEST] >>> " + name);
                     PkRuntime.Motor.History.Clear();
@@ -627,6 +628,8 @@ namespace ParkourMovement
                 case "hang3p": return Hang3p(r);
                 case "perks": return Perks(r);
                 case "options": return OptionsTab(r);
+                case "longslide": return LongSlide(r);
+                case "photoshoot": return PhotoShoot(r);
                 case "injured": return Injured(r);
                 case "tackle": return Tackle(r);
                 case "dropkick": return Dropkick(r);
@@ -1486,6 +1489,185 @@ namespace ParkourMovement
             PerkIntegration.Descriptions.Refresh(force: true);
             r.Note("rank 1 text: " + rank1.Replace("\\n", " | ").Replace("\n", " | "));
             r.Check(rank1.Contains(Localization.Get("pkPerkSlide")) && rank1.Contains("75"), "perk lines in the game's language");
+        }
+
+        // ---------------------------------------------------------------- photo session (mod page gallery)
+
+        /// <summary>Keeps a posed character exactly where the shot wants it (no gravity, no AI walking).</summary>
+        public class PhotoPin : MonoBehaviour
+        {
+            public EntityAlive E;
+            public Vector3 Pos;   // world
+            public float Yaw;
+
+            void LateUpdate()
+            {
+                if (E == null) return;
+                E.SetPosition(Pos);
+                E.SetRotation(new Vector3(0f, Yaw, 0f));
+                E.motion = Vector3.zero;
+            }
+        }
+
+        struct PhotoShot
+        {
+            public string Name, Clip;
+            public float T, Lean, Yaw;
+            public Vector3 At, Cam, Look;           // course-local
+            public float Fov;
+            public Vector3[] Zombies;               // course-local feet, facing the character
+        }
+
+        static IEnumerator PhotoCam(string name, Vector3 camLocal, Vector3 lookLocal, float fov)
+        {
+            yield return new WaitForEndOfFrame();
+            const int w = 1920, h = 1080;
+            GameObject go = null;
+            RenderTexture rt = null;
+            try
+            {
+                go = new GameObject("pkPhotoCam");
+                var cam = go.AddComponent<Camera>();
+                go.transform.position = B + camLocal - Origin.position;
+                go.transform.LookAt(B + lookLocal - Origin.position);
+                cam.fieldOfView = fov;
+                cam.nearClipPlane = 0.05f;
+                cam.farClipPlane = 2000f;
+                rt = new RenderTexture(w, h, 24) { antiAliasing = 8 };
+                cam.targetTexture = rt;
+                cam.Render();
+                RenderTexture.active = rt;
+                var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
+                tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+                tex.Apply();
+                RenderTexture.active = null;
+                File.WriteAllBytes(Path.Combine(_shotDir ?? ".", "photo_" + name + ".png"), tex.EncodeToPNG());
+                UnityEngine.Object.Destroy(tex);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning("[Parkour][TEST] photo: " + ex.Message);
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.Destroy(go);
+                if (rt != null) rt.Release();
+            }
+        }
+
+        /// <summary>Trader Jen in parkour poses around the course, shot from chosen angles in evening light.</summary>
+        static IEnumerator PhotoShoot(Result r)
+        {
+            GamePrefs.Set(EnumGamePrefs.DebugStopEnemiesMoving, true);
+            P.Buffs.AddBuff("god");
+            GameManager.Instance.World.SetTimeJump(18000uL, _isSeek: true);   // 18:00, low warm sun
+            yield return Place(new Vector3(1.5f, 0.05f, 1.5f), 0f);         // the player out of the way
+            P.SetFirstPersonView(false, _bLerpPosition: false);
+            yield return new WaitForSeconds(0.8f);
+            var shots = new[]
+            {
+                new PhotoShot { Name = "01_wallrun", Clip = "sprint_loop", T = 0.15f, Lean = 22f, Yaw = 0f,
+                    At = new Vector3(7.45f, 1.7f, 22f), Cam = new Vector3(5.6f, 1.6f, 27.5f), Look = new Vector3(7.4f, 2.4f, 22f), Fov = 55f },
+                new PhotoShot { Name = "02_wallrun_side", Clip = "sprint_loop", T = 0.45f, Lean = 22f, Yaw = 0f,
+                    At = new Vector3(7.45f, 1.9f, 22f), Cam = new Vector3(5.2f, 2.6f, 19.5f), Look = new Vector3(7.5f, 2.6f, 22.4f), Fov = 50f },
+                new PhotoShot { Name = "03_hang", Clip = "hang", T = 0.2f, Yaw = 0f,
+                    At = new Vector3(19.5f, 3.28f, 29.62f), Cam = new Vector3(16.8f, 3.6f, 26.4f), Look = new Vector3(19.5f, 4.3f, 29.8f), Fov = 45f },
+                new PhotoShot { Name = "04_wallclimb", Clip = "climb_loop", T = 0.35f, Yaw = 0f,
+                    At = new Vector3(18.3f, 1.4f, 29.62f), Cam = new Vector3(15.6f, 1.8f, 26.0f), Look = new Vector3(18.3f, 2.4f, 29.8f), Fov = 48f },
+                new PhotoShot { Name = "05_mantle", Clip = "mantle", T = 0.25f, Yaw = 0f,
+                    At = new Vector3(13.5f, 1.25f, 11.75f), Cam = new Vector3(10.4f, 2.4f, 8.6f), Look = new Vector3(13.5f, 2.2f, 12.2f), Fov = 45f },
+                new PhotoShot { Name = "06_slide", Clip = "slide_loop", T = 0.3f, Yaw = 0f,
+                    At = new Vector3(13.5f, 0f, 44.5f), Cam = new Vector3(10.6f, 0.7f, 46.4f), Look = new Vector3(13.5f, 0.6f, 44.3f), Fov = 45f },
+                new PhotoShot { Name = "07_lowslide", Clip = "slide_loop", T = 0.6f, Yaw = 0f,
+                    At = new Vector3(13.5f, 0f, 48.6f), Cam = new Vector3(10.3f, 0.6f, 47.0f), Look = new Vector3(13.5f, 0.5f, 48.8f), Fov = 48f },
+                new PhotoShot { Name = "08_vault", Clip = "air_start", T = 0.3f, Yaw = 0f,
+                    At = new Vector3(19.5f, 1.15f, 12.6f), Cam = new Vector3(16.4f, 1.5f, 10.6f), Look = new Vector3(19.5f, 1.6f, 12.6f), Fov = 45f },
+                new PhotoShot { Name = "09_dropkick", Clip = "dropkick", T = 0.3f, Yaw = 0f,
+                    At = new Vector3(13.5f, 0.9f, 23.6f), Cam = new Vector3(10.8f, 1.3f, 26.2f), Look = new Vector3(13.5f, 1.2f, 24.4f), Fov = 48f,
+                    Zombies = new[] { new Vector3(13.5f, 0.05f, 25.2f) } },
+                new PhotoShot { Name = "10_zombie_vault", Clip = "air_start", T = 0.35f, Yaw = 0f,
+                    At = new Vector3(13.5f, 1.95f, 39.9f), Cam = new Vector3(10.6f, 1.6f, 42.6f), Look = new Vector3(13.5f, 1.9f, 40.0f), Fov = 48f,
+                    Zombies = new[] { new Vector3(13.5f, 0.05f, 40.1f) } },
+                new PhotoShot { Name = "11_tackle", Clip = "slide_loop", T = 0.3f, Yaw = 0f,
+                    At = new Vector3(19.5f, 0f, 20.6f), Cam = new Vector3(16.7f, 0.9f, 23.8f), Look = new Vector3(19.5f, 0.7f, 21.4f), Fov = 50f,
+                    Zombies = new[] { new Vector3(19.5f, 0.05f, 21.9f), new Vector3(18.7f, 0.05f, 22.8f), new Vector3(20.4f, 0.05f, 22.9f) } },
+                new PhotoShot { Name = "12_roll", Clip = "roll", T = 0.22f, Yaw = 90f,
+                    At = new Vector3(6.0f, 0.15f, 48f), Cam = new Vector3(8.6f, 0.9f, 45.2f), Look = new Vector3(6.2f, 0.6f, 48f), Fov = 45f },
+            };
+
+            EntityAlive jen = P;
+            var pin = P.gameObject.AddComponent<PhotoPin>();
+            pin.E = P; pin.Pos = B + shots[0].At; pin.Yaw = shots[0].Yaw;
+            var drv = BodyAnimDriver.Instance;
+            yield return new WaitForSeconds(0.5f);
+            int done = 0;
+            foreach (PhotoShot s in shots)
+            {
+                var zs = new List<EntityAlive>();
+                if (s.Zombies != null)
+                    foreach (Vector3 zl in s.Zombies)
+                    {
+                        Vector3 d = s.At - zl;
+                        EntityAlive z = SpawnZombie(zl, Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg);
+                        if (z != null) zs.Add(z);
+                    }
+                pin.Pos = B + s.At;
+                pin.Yaw = s.Yaw;
+                drv.Pose(s.Clip, s.T, s.Lean);
+                yield return new WaitForSeconds(s.Zombies != null ? 2.0f : 0.6f);
+                // skinned meshes keep their bounds from the rest pose: never cull the posed body
+                int rOn = 0, rAll = 0;
+                string modes = "";
+                Vector3 bc = Vector3.zero;
+                foreach (Renderer rr in jen.GetComponentsInChildren<Renderer>(true))
+                {
+                    rAll++;
+                    if (rr is SkinnedMeshRenderer sm) sm.updateWhenOffscreen = true;
+                    if (rr.enabled && rr.gameObject.activeInHierarchy) { rOn++; bc = rr.bounds.center; }
+                    if (modes.Length < 120) modes += $"{rr.shadowCastingMode}/{rr.forceRenderingOff}/{rr.gameObject.layer} ";
+                    rr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                    rr.forceRenderingOff = false;
+                }
+                r.Note($"{s.Name}: renderers {rOn}/{rAll} on, bounds at {bc + Origin.position - B}, entity at {jen.position - B}, ragdoll {jen.emodel?.IsRagdollActive}, visible {jen.emodel?.visible}, modes {modes}");
+                yield return new WaitForSeconds(0.1f);
+                yield return PhotoCam(s.Name, s.Cam, s.Look, s.Fov);
+                done++;
+                foreach (var z in zs)
+                    if (z != null && !z.IsDespawned) GameManager.Instance.World.RemoveEntity(z.entityId, EnumRemoveEntityReason.Despawned);
+                yield return new WaitForSeconds(0.2f);
+            }
+            drv.EndPose();
+            UnityEngine.Object.Destroy(pin);
+
+            r.Note($"{done} photos");
+            r.Check(done == shots.Length, "photos taken");
+            GamePrefs.Set(EnumGamePrefs.DebugStopEnemiesMoving, false);
+            P.Buffs.RemoveBuff("god");
+        }
+
+        /// <summary>A long slope keeps a slide going: it must outlast the old fixed time cap and end by losing speed.</summary>
+        static IEnumerator LongSlide(Result r)
+        {
+            float oldFriction = PkRuntime.Tuning.SlideFriction;
+            PkRuntime.Tuning.SlideFriction = 1.6f;   // what a long downhill does to the speed loss
+            yield return Place(new Vector3(1.5f, 0.05f, 1.5f), 0f);
+            PkRuntime.Motor.History.Clear();
+            In(1f, run: true);
+            yield return new WaitForSeconds(1.4f);
+            In(1f, run: true, crouch: true);
+            float slideTime = 0f, endSpeed = 0f;
+            bool ended = false;
+            yield return Watch(7f, () =>
+            {
+                if (PkRuntime.Motor.State == PkState.Slide) { slideTime += Time.deltaTime; endSpeed = FlatSpeed; }
+                else if (slideTime > 0.2f) ended = true;
+            });
+            In();
+            PkRuntime.Tuning.SlideFriction = oldFriction;
+            r.Note($"slide lasted {slideTime:0.00} s (old cap {PkRuntime.Tuning.SlideMaxTime:0.00} s), speed at the end {endSpeed:0.0} m/s, ended {ended}");
+            r.Check(slideTime > PkRuntime.Tuning.SlideMaxTime + 1f, "slide outlasts the old fixed time cap");
+            r.Check(ended && Saw("slide-end"), "slide ended by itself");
+            r.Check(endSpeed < PkRuntime.Tuning.SlideExitSpeed + 1.5f, "it ended because the speed was gone");
         }
 
         static string HeadInfo()

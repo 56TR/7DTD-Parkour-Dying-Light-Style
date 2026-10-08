@@ -361,7 +361,8 @@ namespace ParkourMovement.Core
             }
             else _ungroundedSince = -1f;
 
-            if (!i.CrouchHeld || _speed < T.SlideExitSpeed || StateTime > T.SlideMaxTime)
+            // the slide lasts as long as it has speed (a long slope keeps it going), not for a fixed time
+            if (!i.CrouchHeld || _speed < T.SlideExitSpeed)
             {
                 SetState(PkState.None, "slide-end");
                 o.SetHorizontal = true;
