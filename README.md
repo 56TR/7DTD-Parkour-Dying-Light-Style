@@ -107,7 +107,7 @@ All movement numbers are in `Config/parkour.xml` (speeds in m/s, times in s, hei
 
 ## Source code
 
-Open source under the MIT license: https://github.com/56TR/7DTD-Parkour-from-Dying-Light-2
+Open source under the MIT license: https://github.com/56TR/7DTD-Parkour-Dying-Light-Style
 Build instructions: `BUILDING.md`. Bug reports and pull requests are welcome.
 
 ## Credits

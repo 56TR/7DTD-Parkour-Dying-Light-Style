@@ -5,5 +5,5 @@
 	<Description value="Dying Light style parkour: slide, wall run, wall climb, vault, ledge hang with shimmy and corners, landing roll, slide tackles, dropkicks and stomps on zombies. Every move can be switched off in Options > General > Parkour; optionally the moves unlock with the vanilla Parkour perk. Client-side and optional in multiplayer. Needs EAC off." />
 	<Author value="56TR" />
 	<Version value="1.0.0" />
-	<Website value="https://github.com/56TR/7DTD-Parkour-from-Dying-Light-2" />
+	<Website value="https://github.com/56TR/7DTD-Parkour-Dying-Light-Style" />
 </ModInfo>
