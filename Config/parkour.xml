@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Parkour Movement tuning. Speeds m/s, times s, heights m above the feet, damage in hit points.
+     Values marked DL2 come from Dying Light 2 scripts/player/player_variables.scr, speeds scaled x1.3 (7DTD sprint 6.6 m/s vs DL2 5.0).
+     Edit, then in game console: pk reload   (or pk set <name> <value> to try one value live) -->
+<parkour>
+	<property name="Enabled" value="true"/>
+
+	<!-- generic -->
+	<property name="JumpSpeed" value="6.0"/>  <!-- used by motor-made jumps (coyote, slide jump); ~1.5 m with vanilla gravity -->
+	<property name="CoyoteTime" value="0.2"/>  <!-- DL2 AmortizerJumpHelpTimer -->
+	<property name="StuckTicks" value="4"/>  <!-- forced moves abort after this many ticks of no progress -->
+
+	<!-- air momentum -->
+	<property name="AirControlAccel" value="9"/>  <!-- m/s^2 steering while airborne -->
+	<property name="AirDrag" value="0.35"/>  <!-- fraction of speed lost per second above AirCruiseSpeed -->
+	<property name="AirCruiseSpeed" value="6.2"/>  <!-- speed reachable by air steering alone -->
+	<property name="AirMaxSpeed" value="16"/>
+
+	<!-- slide -->
+	<property name="SlideMinEnterSpeed" value="4.6"/>
+	<property name="SlideBoost" value="1.25"/>  <!-- entry speed multiplier -->
+	<property name="SlideMinSpeed" value="7.0"/>  <!-- entry speed floor -->
+	<property name="SlideMaxSpeed" value="14"/>
+	<property name="SlideFriction" value="3.9"/>  <!-- DL2 SlidingMovementDeceleration 3.0, scaled -->
+	<property name="SlideSlopeAccel" value="1.0"/>  <!-- multiplier of gravity along the slope -->
+	<property name="SlideExitSpeed" value="2.8"/>
+	<property name="SlideMaxTime" value="1.25"/>  <!-- DL2 SlideLoopNitroDuration -->
+	<property name="SlideSteerDeg" value="45"/>  <!-- deg/s -->
+	<property name="SlideCooldown" value="0.35"/>
+	<property name="SlideStamina" value="4"/>
+	<property name="SlideJumpBoost" value="1.1"/>  <!-- horizontal carry multiplier -->
+	<property name="JumpCarryKeep" value="0.12"/>  <!-- s: slide / roll jump momentum survives the game still reporting grounded right after the push off -->
+	<property name="SlideJumpUp" value="0.8"/>  <!-- * JumpSpeed: ~1 m hop, 7DTD's own jump (1.5 m) is far higher than DL2's -->
+
+	<!-- wall run (side) -->
+	<property name="WallRunMinSpeed" value="5.5"/>  <!-- DL2 WallRunSideMinSpeed 4.5 x1.3 (7DTD sprint 6.6 vs DL2 5.0) -->
+	<property name="WallRunProbe" value="0.55"/>  <!-- beyond capsule radius -->
+	<property name="WallRunSpeed" value="8.5"/>  <!-- DL2 WallRunSideMaxSpeed 7.0, scaled -->
+	<property name="WallRunMaxTime" value="1.25"/>  <!-- DL2 WallRunSideMaxDuration -->
+	<property name="WallRunEntryUp" value="1.5"/>  <!-- vertical speed floor at entry -->
+	<property name="WallRunEntryMaxUp" value="2.0"/>  <!-- jump momentum kept on the wall is capped: ~0.5 m arc, not a 2 m climb -->
+	<property name="WallRunGravity" value="0.35"/>  <!-- * body gravity -->
+	<property name="WallRunMaxFallSpeed" value="5"/>  <!-- won't attach when falling faster -->
+	<property name="WallRunMaxAngle" value="50"/>  <!-- velocity vs wall tangent -->
+	<property name="WallRunStaminaPerSec" value="6"/>
+	<property name="WallRunStaminaEnter" value="3"/>
+	<property name="WallRunRoll" value="13"/>
+	<property name="WallRunSameWallCooldown" value="0.7"/>
+
+	<!-- wall jump -->
+	<property name="WallJumpOut" value="7.0"/>  <!-- DL2 WallJumpSideSpeed 7.0 -->
+	<property name="WallJumpUp" value="4.65"/>  <!-- DL2 AdvancedParkourNormalJumpHeight 0.92 m -->
+	<property name="WallJumpAlong" value="0.8"/>  <!-- keep this fraction of along-wall speed -->
+	<property name="WallJumpLook" value="3.0"/>  <!-- extra push in look direction (only if looking off the wall) -->
+	<property name="WallJumpStamina" value="5"/>
+	<property name="WallJumpControlLock" value="0.25"/>  <!-- no air steering right after the kick-off -->
+
+	<!-- wall climb (run up a wall you face) -->
+	<property name="WallClimbSpeed" value="6.5"/>
+	<property name="WallClimbTime" value="0.55"/>
+	<property name="WallClimbMaxAngle" value="35"/>  <!-- look vs wall normal -->
+	<property name="WallClimbStamina" value="6"/>
+
+	<!-- ledges -->
+	<property name="LedgeForward" value="0.45"/>  <!-- probe this far past capsule radius -->
+	<property name="MantleMinHeight" value="0.55"/>  <!-- lower is handled by step-up / vault -->
+	<property name="MantleMaxHeight" value="1.65"/>  <!-- direct pull-up from air / climb -->
+	<property name="HangMaxHeight" value="2.45"/>  <!-- reachable by hands, hang first -->
+	<property name="HangHeight" value="1.72"/>  <!-- ledge top - feet while hanging (eyes at the edge, hands in view) -->
+	<property name="MantleUpSpeed" value="4.2"/>  <!-- ~0.5 s pull-up like DL -->
+	<property name="MantleForwardSpeed" value="2.8"/>
+	<property name="MantleMaxTime" value="1.2"/>
+	<property name="MantleStamina" value="3"/>
+	<property name="ClimbMinStamina" value="10"/>
+	<property name="EfficientStaminaScale" value="0.5"/>  <!-- Parkour perk tier 5: parkour moves cost this much stamina         // below this you are spent: no pull-up / climb up / wall climb (hanging still works) -->
+	<property name="ShimmySpeed" value="1.6"/>
+	<property name="HangStaminaPerSec" value="1.5"/>  <!-- holding on drains slowly; at 0 you let go -->
+	<property name="ShimmyStaminaPerSec" value="3"/>  <!-- moving along the edge drains faster -->
+	<property name="HangCornerTime" value="0.6"/>  <!-- going round a block corner while hanging (s) -->
+	<property name="HangClimbHold" value="0.35"/>  <!-- W held this long while hanging climbs up (a fresh W press climbs at once) -->
+	<property name="HangLookYaw" value="80"/>  <!-- first person: how far (deg) you can look left/right off the wall while hanging / climbing -->
+	<property name="HangBodyYaw" value="25"/>  <!-- third person: how far the body may turn off the wall (more = arms twist over the head) -->
+
+	<!-- vault (sprinting into a low obstacle) -->
+	<property name="VaultMinHeight" value="0.45"/>
+	<property name="VaultMaxHeight" value="1.35"/>
+	<property name="VaultMinSpeed" value="4.0"/>
+	<property name="VaultUpSpeed" value="6.5"/>
+	<property name="VaultStamina" value="2"/>
+
+	<!-- landing roll -->
+	<property name="RollWindow" value="0.35"/>  <!-- DL2 ActiveLandingMaxInputTime 0.3 + one frame of slack -->
+	<property name="RollMinFallSpeed" value="7"/>  <!-- vertical m/s at landing to trigger a roll -->
+	<property name="RollDamageScale" value="0.25"/>
+	<property name="RollSpeed" value="6.5"/>
+	<property name="RollTime" value="0.55"/>
+	<property name="HardLandingFallSpeed" value="18"/>  <!-- ~14 m fall = DL2 AmortizedLethalHeight -->
+
+	<!-- combat (7DTD zombies have ~100-300 hp; bashing damage) -->
+	<property name="StrikeCooldown" value="0.8"/>  <!-- same enemy can't be hit again sooner -->
+	<property name="TackleMinSpeed" value="4.5"/>
+	<property name="TackleDamage" value="15"/>
+	<property name="TackleStun" value="2.0"/>
+	<property name="TackleSpeedKeep" value="0.55"/>  <!-- slide speed kept after hitting someone -->
+	<property name="TackleKnockSpeed" value="4.3"/>  <!-- zombies hit by a slide fly back ~3 m (ragdoll velocity) -->
+	<property name="TackleKnockLift" value="2.6"/>
+	<property name="TackleWidth" value="0.5"/>  <!-- extra half-width of the hit zone: a slide sweeps a group -->
+	<property name="DropkickMinSpeed" value="5.0"/>
+	<property name="DropkickDamage" value="30"/>
+	<property name="DropkickStun" value="2.5"/>
+	<property name="DropkickRecoil" value="2.5"/>  <!-- player bounces back this fast -->
+	<property name="DropkickKnockSpeed" value="7.0"/>
+	<property name="DropkickKnockLift" value="3.5"/>
+	<property name="DropkickStamina" value="6"/>
+	<property name="StompMinFallSpeed" value="2.5"/>
+	<property name="StompDamage" value="25"/>
+	<property name="StompDamagePerMps" value="4"/>  <!-- extra per m/s of fall speed -->
+	<property name="StompStun" value="2.0"/>
+	<property name="StompBounce" value="6.0"/>
+	<property name="VaultEnemyRange" value="2.4"/>  <!-- sprint + jump at an enemy this close: vault over it -->
+	<property name="VaultEnemyMaxHeight" value="2.4"/>
+	<property name="VaultEnemyClear" value="0.25"/>  <!-- feet pass this far above its head -->
+	<property name="VaultEnemyStamina" value="4"/>
+
+	<!-- low slide (fits under 1 block) -->
+	<property name="SlideColliderHeight" value="0.9"/>
+	<property name="CrawlSpeed" value="1.6"/>  <!-- while stuck low under something -->
+
+	<!-- first-person body: show your legs / body during moves (slide, wall run, climb, hang, mantle, dropkick) -->
+	<property name="FpBody" value="true"/>
+
+	<!-- camera -->
+	<property name="SprintFov" value="5"/>  <!-- DL2 FovSprintModif 6.0 -->
+	<property name="SlideFov" value="8"/>
+	<property name="SlideLookDown" value="20"/>  <!-- degrees the view tilts down in a slide (legs and the bracing hand in view) -->
+	<property name="SlideEyeDrop" value="-0.6"/>  <!-- camera drop in a slide: eye ~0.7 m over the ground, like DL -->
+	<property name="SlideRoll" value="4"/>
+	<property name="SpeedFovPerMps" value="0.6"/>  <!-- above AirCruiseSpeed -->
+	<property name="CamMaxFovAdd" value="12"/>
+</parkour>

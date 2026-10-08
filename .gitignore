@@ -1,0 +1,17 @@
+# build output
+bin/
+obj/
+tests/**/bin/
+tests/**/obj/
+
+# local test runs (game shadow installs, logs, screenshots) and downloaded animation sources
+_test/
+_assets/
+
+# the game's own text, rebuilt locally by tools/i18n/extract_glossary.py
+tools/i18n/vanilla_glossary.json
+
+__pycache__/
+*.pyc
+.vs/
+*.user
